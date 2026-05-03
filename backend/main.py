@@ -33,6 +33,8 @@ _load_env()
 
 DEEPSEEK_API_URL = os.environ.get("DEEPSEEK_API_URL", "")
 DEEPSEEK_API_KEY = os.environ.get("DEEPSEEK_API_KEY", "")
+
+app = FastAPI(title="Investment Report Agent API")
 print(f"[Init] DeepSeek URL: {DEEPSEEK_API_URL[:30] if DEEPSEEK_API_URL else 'None'}")
 
 def _convert_survey_to_analysis(survey_data: dict) -> dict:
@@ -123,107 +125,7 @@ def _try_parse_json_report(b: bytes, filename: str):
             'suggestions': data.get('suggestions') or [],
             'title': data.get('title', '投资分析报告')
         }
-    return None
-
-@app.post("/upload_report")
-async def upload_report(file: UploadFile = File(...)):
-    content = await file.read()
-    
-    # 解析JSON报告（支持调查问卷格式或标准格式）
-    try:
-        survey_json = jsonlib.loads(content)
-        if 'sections' in survey_json and 'risk_assessment' in survey_json:
-            analysis = _convert_survey_to_analysis(survey_json)
-        elif any(k in survey_json for k in ('core_conclusion', 'radar_points', 'dimension_scores', 'suggestions')):
-            analysis = survey_json
-        else:
-            raise ValueError("Unknown format")
-    except:
-        text = _read_text_from_bytes(content, file.filename)
-        analysis = agent.analyze(text)
-    
-    session_id = str(uuid.uuid4())
-    SESSIONS[session_id] = {
-        'analysis': analysis,
-        'chat': []
-    }
-    
-    # 返回完整信息供前端使用
-    return {
-        "session_id": session_id,
-        "analysis": analysis,
-        "title": analysis.get('title', '投资分析报告'),
-        "core_conclusion": analysis.get('core_conclusion', ''),
-        "radar_points": analysis.get('radar_points', []),
-        "dimension_scores": analysis.get('dimension_scores', []),
-        "suggestions": analysis.get('suggestions', [])
-    }
-
-
-@app.post("/chat")
-async def chat(request: Request):
-    try:
-        data = await request.json()
-    except Exception as e:
-        return JSONResponse(status_code=400, content={"error": f"Invalid JSON: {e}"})
-    
-    session_id = data.get('session_id', '')
-    message = data.get('message', '')
-    
-    logging.info(f"[Chat] Request - session: {session_id}, msg: {message[:30]}")
-    logging.info(f"[Chat] Available sessions: {list(SESSIONS.keys())}")
-    
-    if session_id not in SESSIONS:
-        return JSONResponse(status_code=400, content={
-            "error": f"Session {session_id} not found", 
-            "available": list(SESSIONS.keys())
-        })
-    
-    analysis = SESSIONS[session_id].get('analysis', {})
-    logging.info(f"[Chat] Analysis: {analysis}")
-    
-    # 简单的规则回复
-    reply = ''
-    if '核心' in message:
-        reply = analysis.get('core_conclusion') or '无结论'
-    elif '维度' in message or '雷达' in message:
-        dims = analysis.get('dimension_scores', [])
-        reply = '\n'.join([f"{d.get('dimension','?')}: {d.get('score','?')}" for d in dims]) or '无维度数据'
-    elif '建议' in message:
-        reply = '\n'.join(analysis.get('suggestions', [])) or '无建议'
-    else:
-        reply = '请提问关于核心结论、维度得分或建议'
-    
-def _try_parse_json_report(b: bytes, filename: str) -> dict:
-    """兼容survey问卷和标准报告格式"""
-    try:
-        s = b.decode('utf-8')
-    except:
-        try:
-            s = b.decode('gbk', errors='ignore')
-        except:
-            return None
-    try:
-        data = jsonlib.loads(s)
-    except:
-        return None
-    if not isinstance(data, dict):
-        return None
-    
-    # Survey格式
-    if 'sections' in data and 'risk_assessment' in data:
-        return _convert_survey_to_analysis(data)
-    
-    # 标准格式
-    if any(k in data for k in ('core_conclusion', 'radar_points', 'dimension_scores', 'suggestions')):
-        return {
-            'core_conclusion': data.get('core_conclusion', ''),
-            'radar_points': data.get('radar_points', []),
-            'dimension_scores': data.get('dimension_scores', []),
-            'suggestions': data.get('suggestions', []),
-            'title': data.get('title', '投资分析报告')
-        }
-    return None
+return None
 
 @app.post("/upload")
 async def upload_only(file: UploadFile = File(...)):
