@@ -18,12 +18,6 @@ import logging
 logging.basicConfig(level=logging.INFO)
 from datetime import datetime
 
-# 导入FPDF
-try:
-    from fpdf import FPDF
-except ImportError:
-    FPDF = None
-
 # 加载.env配置
 def _load_env():
     env_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '.env')
@@ -43,9 +37,6 @@ DEEPSEEK_API_KEY = os.environ.get("DEEPSEEK_API_KEY", "")
 print(f"[Init] DeepSeek URL: {DEEPSEEK_API_URL[:30] if DEEPSEEK_API_URL else 'None'}")
 
 def _generate_pdf_report(analysis: dict, session_id: str) -> str:
-    if not FPDF:
-        print("[PDF] FPDF not installed")
-        return None
     
     pdf = FPDF()
     pdf.add_page()
@@ -446,18 +437,14 @@ def _try_parse_json_report(b: bytes, filename: str) -> dict:
 
 @app.post("/upload")
 async def upload_only(file: UploadFile = File(...)):
-    """简化版上传"""
+    """处理问卷数据，生成分析报告和PDF"""
     try:
         content = await file.read()
-        filename = file.filename or "unknown.json"
         
         # 解析JSON
-        try:
-            data = jsonlib.loads(content)
-        except:
-            return {"error": "不是有效的JSON"}
+        data = jsonlib.loads(content)
         
-        # 直接生成analysis，不保存JSON
+        # 检测survey格式并转换
         if 'sections' in data and 'risk_assessment' in data:
             analysis = _convert_survey_to_analysis(data)
         elif any(k in data for k in ('core_conclusion', 'dimension_scores')):
@@ -470,14 +457,14 @@ async def upload_only(file: UploadFile = File(...)):
         session_id = str(uuid.uuid4())
         SESSIONS[session_id] = {'analysis': analysis, 'chat': []}
         
-        # 生成PDF报告
+        # 直接生成PDF - 不需要先存JSON
         try:
             pdf_path = _generate_pdf_report(analysis, session_id)
-            print(f"[PDF Generated] {pdf_path}")
+            print(f"[PDF] Generated: {pdf_path}")
         except Exception as e:
             print(f"[PDF Error] {e}")
         
-        return {"session_id": session_id, "analysis": analysis}
+return {"session_id": session_id, "analysis": analysis}
         
         return {"session_id": session_id, "analysis": analysis}
     except Exception as e:
