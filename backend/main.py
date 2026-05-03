@@ -475,7 +475,10 @@ async def upload_only(file: UploadFile = File(...)):
         # 生成PDF报告
         try:
             pdf_path = _generate_pdf_report(analysis, session_id)
-            print(f"[PDF] {pdf_path}")
+            if pdf_path and os.path.exists(pdf_path):
+                print(f"[PDF Generated] {pdf_path}")
+            else:
+                print(f"[PDF] Failed to generate")
         except Exception as e:
             print(f"[PDF Error] {e}")
         
