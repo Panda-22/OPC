@@ -16,7 +16,6 @@ except Exception:
     httpx = None
 import logging
 logging.basicConfig(level=logging.INFO)
-from datetime import datetime
 
 # 加载.env配置
 def _load_env():
@@ -35,151 +34,6 @@ _load_env()
 DEEPSEEK_API_URL = os.environ.get("DEEPSEEK_API_URL", "")
 DEEPSEEK_API_KEY = os.environ.get("DEEPSEEK_API_KEY", "")
 print(f"[Init] DeepSeek URL: {DEEPSEEK_API_URL[:30] if DEEPSEEK_API_URL else 'None'}")
-
-def _generate_pdf_report(analysis: dict, session_id: str) -> str:
-    """生成纯文本报告（避免PDF编码问题）"""
-    # 直接生成txt文件，避免fpdf中文问题
-    data_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'data')
-    os.makedirs(data_dir, exist_ok=True)
-    ts = datetime.now().strftime("%Y-%m-%dT%H-%M-%S")
-    txt_path = os.path.join(data_dir, f'report_{ts}.txt')
-    
-    lines = []
-    lines.append("=" * 40)
-    lines.append(analysis.get('title', 'Investment Analysis Report'))
-    lines.append("=" * 40)
-    lines.append("")
-    lines.append("Core Conclusion:")
-    core = analysis.get('core_conclusion', 'N/A')
-    if core:
-        lines.append(core[:200])
-    lines.append("")
-    lines.append("Dimension Scores:")
-    for d in analysis.get('dimension_scores', []):
-        lines.append(f"  {d.get('dimension','?')}: {d.get('score','?')}")
-    lines.append("")
-    lines.append("Suggestions:")
-    for i, s in enumerate(analysis.get('suggestions', []), 1):
-        lines.append(f"  {i}. {s[:100]}")
-    
-    with open(txt_path, 'w', encoding='utf-8') as f:
-        f.write('\n'.join(lines))
-    
-    return txt_path
-# 加载.env配置
-    env_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '.env')
-    if os.path.exists(env_file):
-        with open(env_file) as f:
-            for line in f:
-                line = line.strip()
-                if line and not line.startswith('#') and '=' in line:
-                    k, v = line.split('=', 1)
-                    if k not in os.environ:
-                        os.environ[k] = v
-                        
-    # DeepSeek配置
-    DEEPSEEK_API_URL = os.environ.get("DEEPSEEK_API_URL", "")
-    DEEPSEEK_API_KEY = os.environ.get("DEEPSEEK_API_KEY", "")
-    print(f"[Init] DeepSeek URL: {DEEPSEEK_API_URL[:30] if DEEPSEEK_API_URL else 'None'}")
-
-from agents.investment_report_agent import InvestmentReportAgent
-
-app = FastAPI(title="Investment Report Agent API")
-
-# Allow CORS for frontend
-origins = ["*"]
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=origins,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
-# In-memory sessions cache
-SESSIONS: Dict[str, Dict[str, Any]] = {}
-
-agent = InvestmentReportAgent()
-
-
-def _read_text_from_bytes(b: bytes, filename: str) -> str:
-    # 优先尝试直接从 PDF 提取文本（如果上传的是 PDF），然后再退回文本解码
-    fname = (filename or '').lower()
-    # 直接对常见图片格式进行 OCR 提取（若上传的是图片）
-    image_exts = ('.png', '.jpg', '.jpeg', '.tif', '.tiff', '.bmp')
-    if fname.endswith(image_exts):
-        try:
-            ocr_text = _ocr_image_bytes(b, filename)
-            if ocr_text:
-                return ocr_text.strip()
-        except Exception:
-            pass
-    if fname.endswith('.pdf'):
-        # 1) 尝试直接文本提取
-        try:
-            import fitz  # PyMuPDF
-            doc = fitz.open(stream=b, filetype="pdf")
-            parts = []
-            for page in doc:
-                text = page.get_text("text")
-                if text:
-                    parts.append(text)
-            pdf_text = "\n".join(parts).strip()
-            doc.close()
-            if pdf_text and len(pdf_text) > 100:
-                return pdf_text
-        except Exception:
-            pdf_text = ''
-
-        # 2) 直接 OCR 提取（对图片型 PDF/文本提取失败场景）
-        try:
-            ocr_text = _ocr_pdf_bytes(b, filename)
-            if ocr_text:
-                return ocr_text.strip()
-        except Exception:
-            pass
-        # 3) 最后兜底：如果仍为空，继续回退到简单解码
-
-    # 回退：尝试以 UTF-8 解码，失败时再用 GBK 忽略错误
-    try:
-        text = b.decode('utf-8')
-        return text
-    except Exception:
-        try:
-            return b.decode('gbk', errors='ignore')
-        except Exception:
-            return ''
-
-
-def _ocr_pdf_bytes(b: bytes, filename: str) -> str:
-    # 使用 PyMuPDF 渲染每页为图片后，使用 Tesseract OCR 识别
-    try:
-        import fitz  # PyMuPDF
-        import pytesseract
-        from PIL import Image
-    except Exception:
-        return ''
-    text_parts = []
-    try:
-        doc = fitz.open(stream=b, filetype="pdf")
-        for page in doc:
-            try:
-                pix = page.get_pixmap(dpi=200)
-                with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as tmp:
-                    pix.writePNG(tmp.name)
-                    tmp.flush()
-                    image = Image.open(tmp.name)
-                    t = pytesseract.image_to_string(image, lang="chi_sim+eng")
-                    if t:
-                        text_parts.append(t)
-                    image.close()
-                    os.unlink(tmp.name)
-            except Exception:
-                continue
-        doc.close()
-    except Exception:
-        return ''
-    return '\n'.join(text_parts)
 
 def _convert_survey_to_analysis(survey_data: dict) -> dict:
     """将调查问卷JSON转换为分析格式"""
@@ -373,7 +227,7 @@ def _try_parse_json_report(b: bytes, filename: str) -> dict:
 
 @app.post("/upload")
 async def upload_only(file: UploadFile = File(...)):
-    """处理问卷数据，生成分析报告和PDF"""
+    """处理问卷数据，返回分析报告"""
     try:
         content = await file.read()
         data = jsonlib.loads(content)
@@ -388,13 +242,6 @@ async def upload_only(file: UploadFile = File(...)):
         import uuid
         session_id = str(uuid.uuid4())
         SESSIONS[session_id] = {'analysis': analysis, 'chat': []}
-        
-        # 生成PDF
-        try:
-            pdf_path = _generate_pdf_report(analysis, session_id)
-            print(f"[PDF] Generated: {pdf_path}")
-        except Exception as e:
-            print(f"[PDF Error] {e}")
         
         return {"session_id": session_id, "analysis": analysis}
     except Exception as e:
@@ -480,9 +327,6 @@ async def debug():
 
 # Static files under /frontend for assets
 app.mount("/frontend", StaticFiles(directory="./frontend"), name="frontend")
-
-# Serve static files
-app.mount("/data", StaticFiles(directory="./data"), name="data")
 
 @app.get("/report.html")
 async def report_page():
