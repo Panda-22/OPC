@@ -37,79 +37,35 @@ DEEPSEEK_API_KEY = os.environ.get("DEEPSEEK_API_KEY", "")
 print(f"[Init] DeepSeek URL: {DEEPSEEK_API_URL[:30] if DEEPSEEK_API_URL else 'None'}")
 
 def _generate_pdf_report(analysis: dict, session_id: str) -> str:
-    try:
-        from fpdf import FPDF
-    except ImportError:
-        return None
-    
-    pdf = FPDF()
-    pdf.add_page()
-    pdf.set_auto_page_break(auto=True, margin=15)
-    
-    # 使用内置字体（不支持中文，用ASCII）
-    title = analysis.get('title', 'Investment Analysis Report') or 'Investment Analysis Report'
-    pdf.set_font("Helvetica", "B", 16)
-    pdf.cell(0, 12, title, ln=True, align='C')
-    pdf.ln(8)
-    
-    # 分隔线
-    pdf.set_line_width(0.5)
-    pdf.line(20, pdf.get_y(), 190, pdf.get_y())
-    pdf.ln(5)
-    
-    # 核心结论 (只取ASCII部分)
-    pdf.set_font("Helvetica", "B", 12)
-    pdf.cell(0, 10, 'Core Conclusion:', ln=True)
-    pdf.set_font("Helvetica", "", 10)
-    core = analysis.get('core_conclusion', 'N/A') or 'N/A'
-    # 移除中文字符用于PDF
-    core_ascii = ''.join(c if ord(c) < 128 else ' ' for c in str(core)[:100])
-    pdf.multi_cell(0, 6, core_ascii)
-    pdf.ln(5)
-    
-    # 维度得分
-    pdf.set_font("Helvetica", "B", 12)
-    pdf.cell(0, 10, 'Dimension Scores:', ln=True)
-    pdf.set_font("Helvetica", "", 10)
-    
-    dims = analysis.get('dimension_scores', [])
-    if dims:
-        pdf.cell(80, 8, 'Dimension', 1)
-        pdf.cell(30, 8, 'Score', 1, 1)
-        for d in dims:
-            name = ''.join(c if ord(c) < 128 else ' ' for c in str(d.get('dimension', '?')))
-            score = str(d.get('score', 0))
-            pdf.cell(80, 8, name, 1)
-            pdf.cell(30, 8, score, 1, 1)
-    else:
-        pdf.cell(0, 8, 'No data', ln=True)
-    
-    pdf.ln(5)
-    
-    # 建议 (ASCII only)
-    pdf.set_font("Helvetica", "B", 12)
-    pdf.cell(0, 10, 'Suggestions:', ln=True)
-    pdf.set_font("Helvetica", "", 10)
-    suggestions = analysis.get('suggestions', [])
-    if suggestions:
-        for i, s in enumerate(suggestions, 1):
-            s_ascii = ''.join(c if ord(c) < 128 else ' ' for c in str(s)[:80])
-            pdf.cell(0, 6, f"{i}. {s_ascii}", ln=True)
-    else:
-        pdf.cell(0, 6, 'No suggestions', ln=True)
-    
-    pdf.ln(10)
-    pdf.set_font("Helvetica", "I", 8)
-    pdf.cell(0, 6, f"Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}", ln=True, align='R')
-    
-    # 保存
+    """生成纯文本报告（避免PDF编码问题）"""
+    # 直接生成txt文件，避免fpdf中文问题
     data_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'data')
     os.makedirs(data_dir, exist_ok=True)
     ts = datetime.now().strftime("%Y-%m-%dT%H-%M-%S")
-    pdf_path = os.path.join(data_dir, f'report_{ts}.pdf')
-    pdf.output(pdf_path)
+    txt_path = os.path.join(data_dir, f'report_{ts}.txt')
     
-    return pdf_path
+    lines = []
+    lines.append("=" * 40)
+    lines.append(analysis.get('title', 'Investment Analysis Report'))
+    lines.append("=" * 40)
+    lines.append("")
+    lines.append("Core Conclusion:")
+    core = analysis.get('core_conclusion', 'N/A')
+    if core:
+        lines.append(core[:200])
+    lines.append("")
+    lines.append("Dimension Scores:")
+    for d in analysis.get('dimension_scores', []):
+        lines.append(f"  {d.get('dimension','?')}: {d.get('score','?')}")
+    lines.append("")
+    lines.append("Suggestions:")
+    for i, s in enumerate(analysis.get('suggestions', []), 1):
+        lines.append(f"  {i}. {s[:100]}")
+    
+    with open(txt_path, 'w', encoding='utf-8') as f:
+        f.write('\n'.join(lines))
+    
+    return txt_path
 # 加载.env配置
     env_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '.env')
     if os.path.exists(env_file):
