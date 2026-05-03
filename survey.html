@@ -515,8 +515,117 @@
       container.textContent = text;
       container.style.display = 'block';
       
+      // 绘制雷达图
+      renderRadarChart(analysis.dimension_scores || []);
+      
       // 添加对话界面
       addChatInterface(sessionId);
+    }
+    
+    function renderRadarChart(dimensions) {
+      if (!dimensions.length) return;
+      
+      var canvas = document.getElementById('radarCanvas');
+      if (!canvas) {
+        canvas = document.createElement('canvas');
+        canvas.id = 'radarCanvas';
+        canvas.width = 300;
+        canvas.height = 300;
+        canvas.style.cssText = 'display:block;margin:12px auto;max-width:100%;';
+        
+        var container = document.getElementById('riskReport');
+        if (container && container.nextSibling) {
+          container.parentNode.insertBefore(canvas, container.nextSibling);
+        } else if (container) {
+          container.parentNode.appendChild(canvas);
+        }
+      }
+      
+      var ctx = canvas.getContext('2d');
+      var w = canvas.width, h = canvas.height;
+      var cx = w/2, cy = h/2;
+      var r = Math.min(w,h)/2 - 40;
+      
+      // 清除
+      ctx.clearRect(0, 0, w, h);
+      ctx.fillStyle = '#fafafa';
+      ctx.fillRect(0, 0, w, h);
+      
+      // 绘制网格
+      var n = dimensions.length;
+      for (var i = 1; i <= 4; i++) {
+        ctx.beginPath();
+        ctx.strokeStyle = '#e5e7eb';
+        ctx.lineWidth = 1;
+        for (var j = 0; j < n; j++) {
+          var ang = (j / n) * Math.PI * 2 - Math.PI/2;
+          var ri = r * i / 4;
+          var x = cx + Math.cos(ang) * ri;
+          var y = cy + Math.sin(ang) * ri;
+          if (j === 0) ctx.moveTo(x, y);
+          else ctx.lineTo(x, y);
+        }
+        ctx.closePath();
+        ctx.stroke();
+      }
+      
+      // 绘制轴线
+      ctx.strokeStyle = '#d1d5db';
+      for (var j = 0; j < n; j++) {
+        var ang = (j / n) * Math.PI * 2 - Math.PI/2;
+        ctx.beginPath();
+        ctx.moveTo(cx, cy);
+        ctx.lineTo(cx + Math.cos(ang) * r, cy + Math.sin(ang) * r);
+        ctx.stroke();
+        
+        // 标签
+        var dim = dimensions[j];
+        var label = (dim.dimension || '?').replace('匹配度', '');
+        var lx = cx + Math.cos(ang) * (r + 20);
+        var ly = cy + Math.sin(ang) * (r + 20);
+        ctx.fillStyle = '#374151';
+        ctx.font = '11px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(label, lx, ly);
+      }
+      
+      // 绘制数据区域
+      ctx.beginPath();
+      ctx.fillStyle = 'rgba(59, 130, 246, 0.2)';
+      ctx.strokeStyle = '#3b82f6';
+      ctx.lineWidth = 2;
+      for (var j = 0; j < n; j++) {
+        var score = Math.min(25, dimensions[j].score || 0);
+        var ang = (j / n) * Math.PI * 2 - Math.PI/2;
+        var ri = r * score / 25;
+        var x = cx + Math.cos(ang) * ri;
+        var y = cy + Math.sin(ang) * ri;
+        if (j === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      }
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+      
+      // 绘制数值点
+      for (var j = 0; j < n; j++) {
+        var score = Math.min(25, dimensions[j].score || 0);
+        var ang = (j / n) * Math.PI * 2 - Math.PI/2;
+        var ri = r * score / 25;
+        var x = cx + Math.cos(ang) * ri;
+        var y = cy + Math.sin(ang) * ri;
+        
+        ctx.beginPath();
+        ctx.fillStyle = '#3b82f6';
+        ctx.arc(x, y, 4, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // 分数
+        ctx.fillStyle = '#1f2937';
+        ctx.font = 'bold 11px sans-serif';
+        ctx.fillText(score, x + 8 * Math.cos(ang), y + 8 * Math.sin(ang));
+      }
     }
     
     function addChatInterface(sessionId) {
