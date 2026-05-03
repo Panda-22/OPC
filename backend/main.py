@@ -10,24 +10,33 @@ import uuid
 import json
 from typing import Dict, Any
 import json as jsonlib
-import os
 try:
     import httpx
 except Exception:
     httpx = None
 import logging
 logging.basicConfig(level=logging.INFO)
-
-from fpdf import FPDF
-import os
 from datetime import datetime
 
+# 加载.env配置
+def _load_env():
+    env_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '.env')
+    if os.path.exists(env_file):
+        with open(env_file) as f:
+            for line in f:
+                line = line.strip()
+                if line and not line.startswith('#') and '=' in line:
+                    k, v = line.split('=', 1)
+                    if k not in os.environ:
+                        os.environ[k] = v
+
+_load_env()
+
+DEEPSEEK_API_URL = os.environ.get("DEEPSEEK_API_URL", "")
+DEEPSEEK_API_KEY = os.environ.get("DEEPSEEK_API_KEY", "")
+print(f"[Init] DeepSeek URL: {DEEPSEEK_API_URL[:30] if DEEPSEEK_API_URL else 'None'}")
+
 def _generate_pdf_report(analysis: dict, session_id: str) -> str:
-    """生成PDF报告并保存"""
-    try:
-        from fpdf import FPDF
-    except ImportError:
-        return None
     
     pdf = FPDF()
     pdf.add_page()
@@ -121,9 +130,21 @@ def _generate_pdf_report(analysis: dict, session_id: str) -> str:
     pdf.output(pdf_path)
     
     return pdf_path
-DEEPSEEK_API_URL = os.environ.get("DEEPSEEK_API_URL", "")
-DEEPSEEK_API_KEY = os.environ.get("DEEPSEEK_API_KEY", "")
-print(f"[Init] DeepSeek URL: {DEEPSEEK_API_URL[:30] if DEEPSEEK_API_URL else 'None'}")
+# 加载.env配置
+    env_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '.env')
+    if os.path.exists(env_file):
+        with open(env_file) as f:
+            for line in f:
+                line = line.strip()
+                if line and not line.startswith('#') and '=' in line:
+                    k, v = line.split('=', 1)
+                    if k not in os.environ:
+                        os.environ[k] = v
+                        
+    # DeepSeek配置
+    DEEPSEEK_API_URL = os.environ.get("DEEPSEEK_API_URL", "")
+    DEEPSEEK_API_KEY = os.environ.get("DEEPSEEK_API_KEY", "")
+    print(f"[Init] DeepSeek URL: {DEEPSEEK_API_URL[:30] if DEEPSEEK_API_URL else 'None'}")
 
 from agents.investment_report_agent import InvestmentReportAgent
 
