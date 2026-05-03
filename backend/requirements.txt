@@ -1,0 +1,9 @@
+fastapi
+uvicorn[standard]
+python-multipart
+typing-extensions
+starlette
+pytesseract
+Pillow
+PyMuPDF
+httpx

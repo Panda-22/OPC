@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>投资报告互动分析</title>
+  <link rel="stylesheet" href="/frontend/styles.css" />
+</head>
+<body>
+  <div class="container">
+    <header class="header">
+      <h1>智能投资分析助手</h1>
+      <p>上传餐饮行业投资报告，实时提问并获得基于报告的回答与建议</p>
+    </header>
+    <main class="main">
+      <section class="upload-panel" id="uploadPanel">
+        <h2>上传报告</h2>
+        <div class="upload-area" id="uploadArea">
+          <input type="file" id="fileInput" accept=".txt,.md,.csv,.pdf" />
+          <p>支持 .txt、.md、.csv 等文本格式；PDF 解析请后续支持</p>
+        </div>
+        <div id="uploadStatus" class="status"></div>
+      </section>
+      <section class="analysis-panel" id="analysisPanel" style="display:none;">
+        <h2>分析结果</h2>
+        <div class="cards" id="cards"></div>
+      </section>
+      <section class="chat-panel" id="chatPanel" style="display:none;">
+        <h2>智能对话</h2>
+        <div class="chat-area" id="chatArea"></div>
+        <div class="chat-input">
+          <input id="chatInput" type="text" placeholder="输入你的问题，例如：核心结论是什么？" />
+          <button id="sendBtn">发送</button>
+        </div>
+      </section>
+    </main>
+  </div>
+  <script src="/frontend/script.js"></script>
+  <script>
+    // lightweight SPA bootstrap
+    // this script is intentionally minimal
+  </script>
+  </body>
+</html>

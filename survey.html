@@ -237,7 +237,7 @@
   </div>
 
   <script>
-    // 新增：提交后将表单数据导出为完整的 full_survey.json 和背景 person_background.json，并计算风险评估
+    // 提交后将表单数据导出为完整的 full_survey.json 和背景 person_background.json，并计算风险评估
     (function(){
       var form = document.getElementById('surveyForm');
       form.addEventListener('submit', function(e){
@@ -437,6 +437,30 @@
 
         // 生成完整 JSON 文件
         var fullJson = JSON.stringify(fullSurvey, null, 2);
+        
+        // 同时上传到后端获取分析报告
+        fetch('http://localhost:8000/upload', {
+          method: 'POST',
+          body: (() => {
+            var f = new FormData();
+            f.append('file', new Blob([fullJson], {type: 'application/json'}), 'survey.json');
+            return f;
+          })()
+        }).then(r => {
+          console.log('Upload status:', r.status);
+          return r.text();
+        }).then(text => {
+          console.log('Upload text:', text);
+          var resp = JSON.parse(text);
+          if (resp.session_id && resp.analysis) {
+            // 正确传递session_id
+            showAnalysisResult({session_id: resp.session_id, analysis: resp.analysis});
+          } else {
+            alert('上传结果: ' + text);
+          }
+        }).catch(e => alert('Upload error: ' + e));
+        
+        // 下载JSON文件 (可选)
         var fullBlob = new Blob([fullJson], { type: "application/json" });
         var fullUrl = URL.createObjectURL(fullBlob);
         var aFull = document.createElement('a');
@@ -448,17 +472,97 @@
         document.body.removeChild(aFull);
         URL.revokeObjectURL(fullUrl);
 
-        // 不再输出 JSON 内容，改为输出风险评估报告
         // 渲染前端可视化风险表
         renderRiskViz(riskDims);
-        var riskReportEl = document.getElementById('riskReport');
-        if (riskReportEl) {
-          var dimsText = `四维度分解：资金维度 ${riskDims.financial}/25，经验维度 ${riskDims.experience}/25，时间/心态维度 ${riskDims.timeMindset}/25，区域维度 ${riskDims.region}/25，总分 ${scoreTotal}/100`;
-          riskReportEl.textContent = `餐饮创业适配性综合评价报告\n综合评分：${scoreTotal} 分\n适配等级：${levelName}${rangeStr}\n核心结论：${coreConclusion}\n${dimsText}`;
-          riskReportEl.style.display = 'block';
-        }
       });
     })();
+
+    // 显示后端返回的分析结果并开启对话
+    var currentSessionId = null;
+    
+    function showAnalysisResult(resp) {
+      console.log('showAnalysisResult called with:', resp);
+      var analysis = resp.analysis || resp;
+      var sessionId = resp.session_id;
+      console.log('sessionId:', sessionId);
+      
+      var container = document.getElementById('riskReport');
+      if (!container) {
+        container = document.createElement('div');
+        container.id = 'riskReport';
+        container.style.whiteSpace = 'pre-wrap';
+        container.style.padding = '12px';
+        container.style.margin = '12px 0';
+        container.style.background = '#fffBE6';
+        container.style.border = '1px solid #F2C94C';
+        container.style.borderRadius = '6px';
+        container.style.maxHeight = '300px';
+        container.style.overflowY = 'auto';
+        document.body.appendChild(container);
+      }
+      
+      var text = `【分析报告】\n`;
+      text += `标题：${analysis.title || '投资分析报告'}\n`;
+      text += `\n【核心结论】\n${analysis.core_conclusion || '暂无'}\n`;
+      text += `\n【维度得分】\n`;
+      (analysis.dimension_scores || []).forEach(d => {
+        text += `  ${d.dimension}: ${d.score}/25\n`;
+      });
+      text += `\n【建议】\n`;
+      (analysis.suggestions || []).forEach((s, i) => {
+        text += `  ${i+1}. ${s}\n`;
+      });
+      container.textContent = text;
+      container.style.display = 'block';
+      
+      // 添加对话界面
+      addChatInterface(sessionId);
+    }
+    
+    function addChatInterface(sessionId) {
+      if (document.getElementById('chatContainer')) return;
+      
+      var chatDiv = document.createElement('div');
+      chatDiv.id = 'chatContainer';
+      chatDiv.style.cssText = 'margin-top:16px;padding:12px;background:#fff;border:1px solid #e5e7eb;border-radius:8px;';
+      chatDiv.innerHTML = `
+        <h3 style="margin:0 0 12px;">智能问答</h3>
+        <div id="chatMessages" style="max-height:200px;overflow-y:auto;background:#f9fafb;padding:8px;border-radius:4px;margin-bottom:8px;font-size:14px;"></div>
+        <div style="display:flex;gap:8px;">
+          <input id="chatInput" type="text" placeholder="请输入问题..." style="flex:1;padding:8px;border:1px solid #e5e7eb;border-radius:4px;">
+          <button id="chatSend" style="padding:8px 16px;background:#2563eb;color:#fff;border:none;border-radius:4px;cursor:pointer;">发送</button>
+        </div>
+      `;
+      document.body.appendChild(chatDiv);
+      
+      document.getElementById('chatSend').onclick = function() { sendChat(); };
+      document.getElementById('chatInput').onkeydown = function(e) { if(e.key==='Enter') sendChat(); };
+      
+      function sendChat() {
+        var input = document.getElementById('chatInput');
+        var msgs = document.getElementById('chatMessages');
+        var msg = input.value.trim();
+        if (!msg || !sessionId) return;
+        
+        msgs.innerHTML += `<div style="margin:4px 0;"><b>你：</b>${msg}</div>`;
+        input.value = '';
+        
+        fetch('http://localhost:8000/chat_with_deepseek', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({session_id: sessionId, message: msg})
+        }).then(r => {
+          if (!r.ok) throw new Error('HTTP ' + r.status);
+          return r.text();
+        }).then(text => {
+          var resp = JSON.parse(text);
+          msgs.innerHTML += `<div style="margin:4px 0;color:#2563eb;"><b>助手：</b>${resp.reply||'暂无回复'}</div>`;
+          msgs.scrollTop = msgs.scrollHeight;
+        }).catch(e => {
+          msgs.innerHTML += `<div style="color:red;">请求失败: ${e}</div>`;
+        });
+      }
+    }
   </script>
   <div id="riskViz" class="riskViz" style="display:none;"></div>
   <div id="riskReport" style="display:none; white-space:pre-wrap; padding:12px; margin:12px 0; background:#fffBE6; border:1px solid #F2C94C; border-radius:6px;"></div>
