@@ -460,18 +460,6 @@
           }
         }).catch(e => alert('Upload error: ' + e));
         
-        // 下载JSON文件 (可选)
-        var fullBlob = new Blob([fullJson], { type: "application/json" });
-        var fullUrl = URL.createObjectURL(fullBlob);
-        var aFull = document.createElement('a');
-        var ts = new Date().toISOString().replace(/[:.]/g, '-');
-        aFull.href = fullUrl;
-        aFull.download = `survey_${ts}.json`;
-        document.body.appendChild(aFull);
-        aFull.click();
-        document.body.removeChild(aFull);
-        URL.revokeObjectURL(fullUrl);
-
         // 渲染前端可视化风险表
         renderRiskViz(riskDims);
       });
@@ -496,8 +484,9 @@
         container.style.background = '#fffBE6';
         container.style.border = '1px solid #F2C94C';
         container.style.borderRadius = '6px';
-        container.style.maxHeight = '300px';
+container.style.maxHeight = '300px';
         container.style.overflowY = 'auto';
+        container.style.display = 'block';
         document.body.appendChild(container);
       }
       
@@ -516,8 +505,8 @@
       
       // 添加报告查看链接
       var reportLink = document.createElement('a');
-      reportLink.textContent = '查看详细报告';
-      reportLink.style.cssText = 'display:block;margin:12px 0;padding:10px 20px;background:#3498db;color:#fff;text-decoration:none;border-radius:4px;cursor:pointer;width:fit-content;';
+      reportLink.textContent = '查看详细报告 →';
+      reportLink.style.cssText = 'display:inline-block;margin:16px 8px 0 0;padding:12px 24px;background:#e74c3c;color:#fff;text-decoration:none;border-radius:6px;font-weight:bold;';
       reportLink.href = '/report.html?data=' + encodeURIComponent(JSON.stringify(analysis));
       container.appendChild(reportLink);
       
@@ -677,7 +666,7 @@
     }
   </script>
   <div id="riskViz" class="riskViz" style="display:none;"></div>
-  <div id="riskReport" style="display:none; white-space:pre-wrap; padding:12px; margin:12px 0; background:#fffBE6; border:1px solid #F2C94C; border-radius:6px;"></div>
+  <div id="riskReport" style="display:block; white-space:pre-wrap; padding:12px; margin:12px 0; background:#fffBE6; border:1px solid #F2C94C; border-radius:6px;"></div>
   
 </body>
 </html>

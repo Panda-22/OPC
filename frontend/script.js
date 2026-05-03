@@ -38,7 +38,7 @@
   function handleFile(file) {
     const form = new FormData()
     form.append('file', file)
-    fetch('/upload_report', { method: 'POST', body: form })
+    fetch('/upload', { method: 'POST', body: form })
       .then(res => res.json())
       .then(data => {
         sessionId = data.session_id
