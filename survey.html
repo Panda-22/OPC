@@ -512,11 +512,19 @@
       (analysis.suggestions || []).forEach((s, i) => {
         text += `  ${i+1}. ${s}\n`;
       });
-      container.textContent = text;
-      container.style.display = 'block';
+      // 添加PDF下载提示
+      var pdfNote = document.createElement('div');
+      pdfNote.style.cssText = 'margin:12px 0;padding:8px;background:#e8f5e9;border-radius:4px;font-size:13px;';
+      pdfNote.innerHTML = '📄 PDF报告已生成，可从 data 文件夹下载';
+      container.appendChild(pdfNote);
       
-      // 绘制雷达图
-      renderRadarChart(analysis.dimension_scores || []);
+      // 添加下载链接
+      var downloadLink = document.createElement('a');
+      downloadLink.textContent = '点击下载PDF报告';
+      downloadLink.style.cssText = 'display:inline-block;margin:8px 0;padding:8px 16px;background:#2563eb;color:#fff;text-decoration:none;border-radius:4px;cursor:pointer;';
+      container.appendChild(downloadLink);
+      downloadLink.href = '/data/';
+      downloadLink.target = '_blank';
       
       // 添加对话界面
       addChatInterface(sessionId);

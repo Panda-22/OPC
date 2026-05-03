@@ -564,6 +564,9 @@ async def debug():
 # Static files under /frontend for assets
 app.mount("/frontend", StaticFiles(directory="./frontend"), name="frontend")
 
+# Serve PDF reports under /data
+app.mount("/data", StaticFiles(directory="./data"), name="data")
+
 @app.get("/survey.html")
 async def survey_page():
     import os
