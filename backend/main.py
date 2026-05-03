@@ -481,8 +481,17 @@ async def debug():
 # Static files under /frontend for assets
 app.mount("/frontend", StaticFiles(directory="./frontend"), name="frontend")
 
-# Serve PDF reports under /data
+# Serve static files
 app.mount("/data", StaticFiles(directory="./data"), name="data")
+
+@app.get("/report.html")
+async def report_page():
+    import os
+    path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'report.html')
+    if os.path.exists(path):
+        with open(path) as f:
+            return HTMLResponse(content=f.read())
+    return HTMLResponse(content="Not found", status_code=404)
 
 @app.get("/survey.html")
 async def survey_page():
