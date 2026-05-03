@@ -37,6 +37,10 @@ DEEPSEEK_API_KEY = os.environ.get("DEEPSEEK_API_KEY", "")
 print(f"[Init] DeepSeek URL: {DEEPSEEK_API_URL[:30] if DEEPSEEK_API_URL else 'None'}")
 
 def _generate_pdf_report(analysis: dict, session_id: str) -> str:
+    try:
+        from fpdf import FPDF
+    except ImportError:
+        return None
     
     pdf = FPDF()
     pdf.add_page()
