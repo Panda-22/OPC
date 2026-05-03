@@ -448,18 +448,7 @@ async def upload_only(file: UploadFile = File(...)):
         except:
             return {"error": "不是有效的JSON"}
         
-        # 保存到data文件夹
-        import os
-        from datetime import datetime
-        data_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'data')
-        os.makedirs(data_dir, exist_ok=True)
-        ts = datetime.now().strftime("%Y-%m-%dT%H-%M-%S")
-        save_path = os.path.join(data_dir, f'survey_{ts}.json')
-        with open(save_path, 'w', encoding='utf-8') as f:
-            jsonlib.dump(data, f, ensure_ascii=False, indent=2)
-        print(f"[Saved] {save_path}")
-        
-        # 检测survey格式
+        # 直接生成analysis，不保存JSON
         if 'sections' in data and 'risk_assessment' in data:
             analysis = _convert_survey_to_analysis(data)
         elif any(k in data for k in ('core_conclusion', 'dimension_scores')):
@@ -475,12 +464,11 @@ async def upload_only(file: UploadFile = File(...)):
         # 生成PDF报告
         try:
             pdf_path = _generate_pdf_report(analysis, session_id)
-            if pdf_path and os.path.exists(pdf_path):
-                print(f"[PDF Generated] {pdf_path}")
-            else:
-                print(f"[PDF] Failed to generate")
+            print(f"[PDF Generated] {pdf_path}")
         except Exception as e:
             print(f"[PDF Error] {e}")
+        
+        return {"session_id": session_id, "analysis": analysis}
         
         return {"session_id": session_id, "analysis": analysis}
     except Exception as e:
