@@ -440,11 +440,8 @@ async def upload_only(file: UploadFile = File(...)):
     """处理问卷数据，生成分析报告和PDF"""
     try:
         content = await file.read()
-        
-        # 解析JSON
         data = jsonlib.loads(content)
         
-        # 检测survey格式并转换
         if 'sections' in data and 'risk_assessment' in data:
             analysis = _convert_survey_to_analysis(data)
         elif any(k in data for k in ('core_conclusion', 'dimension_scores')):
@@ -452,19 +449,16 @@ async def upload_only(file: UploadFile = File(...)):
         else:
             return {"error": "未知格式"}
         
-        # 创建session
         import uuid
         session_id = str(uuid.uuid4())
         SESSIONS[session_id] = {'analysis': analysis, 'chat': []}
         
-        # 直接生成PDF - 不需要先存JSON
+        # 生成PDF
         try:
             pdf_path = _generate_pdf_report(analysis, session_id)
             print(f"[PDF] Generated: {pdf_path}")
         except Exception as e:
             print(f"[PDF Error] {e}")
-        
-return {"session_id": session_id, "analysis": analysis}
         
         return {"session_id": session_id, "analysis": analysis}
     except Exception as e:
