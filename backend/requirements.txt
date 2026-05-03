@@ -1,9 +1,10 @@
 fastapi
 uvicorn[standard]
+httpx
 python-multipart
-typing-extensions
-starlette
+PyMuPDF
 pytesseract
 Pillow
+fpdf
 PyMuPDF
 httpx

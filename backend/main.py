@@ -18,7 +18,109 @@ except Exception:
 import logging
 logging.basicConfig(level=logging.INFO)
 
-# DeepSeek配置
+from fpdf import FPDF
+import os
+from datetime import datetime
+
+def _generate_pdf_report(analysis: dict, session_id: str) -> str:
+    """生成PDF报告并保存"""
+    try:
+        from fpdf import FPDF
+    except ImportError:
+        return None
+    
+    pdf = FPDF()
+    pdf.add_page()
+    
+    # 标题
+    pdf.set_font("Arial", "B", 18)
+    pdf.set_text_color(44, 62, 78)
+    pdf.cell(0, 15, analysis.get('title', '投资适配性分析报告'), ln=True, align='C')
+    pdf.ln(5)
+    
+    # 分割线
+    pdf.set_draw_color(189, 195, 199)
+    pdf.set_line_width(0.5)
+    pdf.line(20, pdf.get_y(), 190, pdf.get_y())
+    pdf.ln(5)
+    
+    # 核心结论
+    pdf.set_font("Arial", "B", 14)
+    pdf.set_text_color(44, 62, 78)
+    pdf.cell(0, 10, '核心结论', ln=True)
+    pdf.set_font("Arial", "", 11)
+    pdf.set_text_color(52, 73, 94)
+    core = analysis.get('core_conclusion', '暂无')
+    pdf.multi_cell(0, 6, core)
+    pdf.ln(5)
+    
+    # 维度得分
+    pdf.set_font("Arial", "B", 14)
+    pdf.set_text_color(44, 62, 78)
+    pdf.cell(0, 10, '维度得分对比', ln=True)
+    
+    dims = analysis.get('dimension_scores', [])
+    if dims:
+        pdf.set_font("Arial", "", 11)
+        pdf.set_text_color(52, 73, 94)
+        max_score = 25
+        
+        # 表头
+        pdf.set_fill_color(236, 240, 241)
+        pdf.cell(80, 8, '维度', 1, 0, 'C', True)
+        pdf.cell(40, 8, '得分', 1, 0, 'C', True)
+        pdf.cell(50, 8, '评估', 1, 1, 'C', True)
+        
+        # 数据行
+        for dim in dims:
+            name = dim.get('dimension', '?')
+            score = dim.get('score', 0)
+            
+            # 评估等级
+            if score >= 20:
+                level = '优秀'
+            elif score >= 15:
+                level = '良好'
+            elif score >= 10:
+                level = '一般'
+            else:
+                level = '待提升'
+            
+            pdf.cell(80, 8, name, 1)
+            pdf.cell(40, 8, f'{score}/{max_score}', 1, 0, 'C')
+            pdf.cell(50, 8, level, 1, 1, 'C')
+    
+    pdf.ln(5)
+    
+    # 建议
+    pdf.set_font("Arial", "B", 14)
+    pdf.set_text_color(44, 62, 78)
+    pdf.cell(0, 10, '建议', ln=True)
+    pdf.set_font("Arial", "", 11)
+    pdf.set_text_color(52, 73, 94)
+    
+    suggestions = analysis.get('suggestions', [])
+    if suggestions:
+        for i, s in enumerate(suggestions, 1):
+            pdf.multi_cell(0, 6, f'{i}. {s}')
+    else:
+        pdf.cell(0, 6, '暂无建议', ln=True)
+    
+    pdf.ln(10)
+    
+    # 底部时间
+    pdf.set_font("Arial", "I", 9)
+    pdf.set_text_color(149, 165, 166)
+    pdf.cell(0, 6, f'生成时间: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")} | Session: {session_id[:8]}', ln=True, align='R')
+    
+    # 保存PDF
+    data_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'data')
+    os.makedirs(data_dir, exist_ok=True)
+    ts = datetime.now().strftime("%Y-%m-%dT%H-%M-%S")
+    pdf_path = os.path.join(data_dir, f'report_{ts}.pdf')
+    pdf.output(pdf_path)
+    
+    return pdf_path
 DEEPSEEK_API_URL = os.environ.get("DEEPSEEK_API_URL", "")
 DEEPSEEK_API_KEY = os.environ.get("DEEPSEEK_API_KEY", "")
 print(f"[Init] DeepSeek URL: {DEEPSEEK_API_URL[:30] if DEEPSEEK_API_URL else 'None'}")
@@ -348,6 +450,13 @@ async def upload_only(file: UploadFile = File(...)):
         import uuid
         session_id = str(uuid.uuid4())
         SESSIONS[session_id] = {'analysis': analysis, 'chat': []}
+        
+        # 生成PDF报告
+        try:
+            pdf_path = _generate_pdf_report(analysis, session_id)
+            print(f"[PDF] {pdf_path}")
+        except Exception as e:
+            print(f"[PDF Error] {e}")
         
         return {"session_id": session_id, "analysis": analysis}
     except Exception as e:
