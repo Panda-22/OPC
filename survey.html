@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>餐饮创业意向与适配性深度评估表</title>
+  <style>
+    :root {
+      --bg: #f7f7f9;
+      --card: #ffffff;
+      --text: #1f2937;
+      --muted: #6b7280;
+      --border: #e5e7eb;
+      --accent: #2563eb;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; background: var(--bg); color: var(--text); font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, "PingFang SC", "Noto Sans CJK SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif; }
+    .container { max-width: 980px; margin: 40px auto; padding: 0 16px; }
+    h1 { font-size: 1.4rem; margin: 0 0 8px; }
+    p.subtitle { color: var(--muted); margin: 0 0 16px; }
+
+    form { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 20px; box-shadow: 0 2px 6px rgba(0,0,0,.04); }
+
+    section { padding: 12px 0; border-bottom: 1px dashed var(--border); }
+    section:last-of-type { border-bottom: 0; }
+    .section-title { font-weight: 700; margin-bottom: 6px; }
+
+    .row { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-bottom: 10px; }
+    .row label { min-width: 260px; color: #374151; }
+
+    .inputs { display: flex; flex-direction: column; gap: 6px; }
+    .option { display: inline-flex; align-items: center; gap: 6px; }
+    input[type="radio"], input[type="checkbox"] { width: 16px; height: 16px; }
+    input[type="text"], input[type="number"] {
+      padding: 8px 10px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      min-width: 0;
+      font-size: 1rem;
+      background: #fff;
+    }
+
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+
+    .hint { font-size: 0.92em; color: var(--muted); }
+    .notes { margin-top: 6px; font-size: 0.92em; color: var(--muted); }
+
+    .submit-row { display: flex; justify-content: flex-end; padding-top: 6px; }
+    button.submit { background: var(--accent); color: white; border: none; padding: 10px 16px; border-radius: 6px; cursor: pointer; font-size: 1rem; }
+    button.submit:hover { background: #1e40af; }
+
+    /* 风险前端可视化样式 */
+    .riskViz { margin-top: 12px; padding: 12px; border: 1px solid #e5e7eb; border-radius: 6px; background: #fff; }
+    .risk-item { display: grid; grid-template-columns: 180px 1fr 90px; align-items: center; gap: 12px; padding: 6px 0; }
+    .risk-label { font-weight: 600; }
+    .risk-bar { height: 14px; background: #eef2f7; border-radius: 7px; overflow: hidden; }
+    .risk-fill { height: 100%; background: linear-gradient(90deg, #34d399, #10b981); }
+    .risk-score { text-align: right; font-weight: 600; }
+    .risk-total { margin-top: 6px; font-weight: 700; text-align: right; }
+
+    @media (max-width: 700px) {
+      .row { align-items: flex-start; }
+      .row label { min-width: 180px; }
+      .grid-2, .grid-3 { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>餐饮创业意向与适配性深度评估表</h1>
+    <p class="subtitle">请如实填写，便于评估您的创业风险承受力与适配性。</p>
+
+    <form id="surveyForm" action="#" method="post">
+      <!-- 一、 基础背景 -->
+      <section aria-labelledby="sec1">
+        <div class="section-title" id="sec1">一、 基础背景</div>
+
+        <div class="row">
+          <label>您的年龄段：</label>
+          <div class="inputs" role="group" aria-label="年龄段选项">
+            <label class="option"><input type="radio" name="age_group" value="20-25" required> 20-25 (刚毕业)</label>
+            <label class="option"><input type="radio" name="age_group" value="26-35"> 26-35 (事业上升期)</label>
+            <label class="option"><input type="radio" name="age_group" value="36-50"> 36-50 (稳健投资期)</label>
+            <label class="option"><input type="radio" name="age_group" value="50+"> 50+</label>
+          </div>
+        </div>
+
+        <div class="row">
+          <label>最高学历：</label>
+          <div class="inputs" role="group" aria-label="教育水平选项">
+            <label class="option"><input type="radio" name="education" value="高中及以下" required> 高中及以下</label>
+            <label class="option"><input type="radio" name="education" value="专科/本科"> 专科/本科</label>
+            <label class="option"><input type="radio" name="education" value="硕士及以上"> 硕士及以上</label>
+          </div>
+        </div>
+
+        <div class="row">
+          <label>当前职业状态：</label>
+          <div class="inputs" role="group" aria-label="职业状态选项">
+            <label class="option"><input type="radio" name="employment_status" value="在职（寻找副业）" required> 在职（寻找副业）</label>
+            <label class="option"><input type="radio" name="employment_status" value="自由职业"> 自由职业</label>
+            <label class="option"><input type="radio" name="employment_status" value="待业/应届生"> 待业/应届生</label>
+          </div>
+        </div>
+
+        <div class="row">
+          <label>创业形态偏好：</label>
+          <div class="inputs" role="group" aria-label="创业形态选项">
+            <label class="option"><input type="radio" name="startup_form" value="全职投入" required> 全职投入（亲自驻店，追求高利润控制）</label>
+            <label class="option"><input type="radio" name="startup_form" value="兼职/托管模式"> 兼职/托管模式（聘请店长，追求资产被动增值）</label>
+          </div>
+        </div>
+
+        <div class="row" aria-label="每周投入时间">
+          <label>每周预计可投入店务的时间：</label>
+          <div class="inputs" role="group">
+            <input type="number" name="weekly_hours" min="0" step="1" placeholder="请输入小时数" aria-label="每周投入小时数" />
+            <span class="hint" style="align-self:center;">小时/周</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- 二、 财务画像 -->
+      <section aria-labelledby="sec2">
+        <div class="section-title" id="sec2">二、 财务画像 </div>
+
+        <div class="row">
+          <label>拟投入总预算（包含租金押金与备用金）：</label>
+          <div class="inputs" role="group">
+            <input type="number" name="total_budget" min="0" step="0.1" placeholder="请输入金额，单位：万元" aria-label="拟投入总预算（万）" />
+          </div>
+        </div>
+
+        <div class="row">
+          <label>资金来源构成：</label>
+          <div class="inputs" role="group" aria-label="资金来源选项">
+            <label class="option"><input type="radio" name="fund_source" value="全额自有" required> 全额自有</label>
+            <label class="option"><input type="radio" name="fund_source" value="合伙集资"> 合伙集资</label>
+            <label class="option"><input type="radio" name="fund_source" value="银行贷款/负债"> 银行贷款/负债</label>
+          </div>
+        </div>
+
+        <div class="row" aria-label="心理安全防线">
+          <label>心理安全防线：如果该项目在 6 个月内持续亏损，您最多能承受的总亏损额度是多少？</label>
+          <div class="inputs" role="group">
+            <input type="number" name="max_loss" min="0" step="0.1" placeholder="请输入金额，单位：万元" aria-label="最大承受亏损（万）" />
+          </div>
+        </div>
+
+        <div class="row" aria-label="家庭年收入">
+          <label>您的家庭年收入水平：</label>
+          <div class="inputs" role="group" aria-label="家庭年收入选项">
+            <label class="option"><input type="radio" name="household_income" value="15万以下" required> 15万以下</label>
+            <label class="option"><input type="radio" name="household_income" value="15-50万"> 15-50万</label>
+            <label class="option"><input type="radio" name="household_income" value="50-100万"> 50-100万</label>
+            <label class="option"><input type="radio" name="household_income" value="100万+"> 100万+</label>
+          </div>
+        </div>
+      </section>
+
+      <!-- 三、 行业经验 -->
+      <section aria-labelledby="sec3">
+        <div class="section-title" id="sec3">三、 行业经验</div>
+
+        <div class="row">
+          <label>餐饮从业背景：</label>
+          <div class="inputs" role="group" aria-label="餐饮背景选项">
+            <label class="option"><input type="radio" name="catering_background" value="无经验" required> 纯小白（无经验）</label>
+            <label class="option"><input type="radio" name="catering_background" value="基层经验"> 有过基层经验（兼职过服务员/奶茶店员）</label>
+            <label class="option"><input type="radio" name="catering_background" value="管理经验"> 有过管理经验（担任过店长或餐饮中层）</label>
+          </div>
+        </div>
+
+        <div class="row">
+          <label>通用管理技能（多选）：</label>
+          <div class="inputs" role="group" aria-label="管理技能多选框" style="flex-wrap: wrap;">
+            <label class="option" style="margin-right:12px;"><input type="checkbox" name="mgmt_skills" value="财务报表审计"> 财务报表审计</label>
+            <label class="option" style="margin-right:12px;"><input type="checkbox" name="mgmt_skills" value="团队招聘与培训"> 团队招聘与培训</label>
+            <label class="option" style="margin-right:12px;"><input type="checkbox" name="mgmt_skills" value="线上营销/外卖运营"> 线上营销/外卖运营</label>
+            <label class="option" style="margin-right:12px;"><input type="checkbox" name="mgmt_skills" value="供应链/采购管理"> 供应链/采购管理</label>
+          </div>
+        </div>
+
+        <div class="row">
+          <label>既往创业战绩：</label>
+          <div class="inputs" role="group" aria-label="创业战绩选项">
+            <label class="option"><input type="radio" name="startup_history" value="首次创业" required> 首次创业</label>
+            <label class="option"><input type="radio" name="startup_history" value="失败过1次"> 失败过 1 次</label>
+            <label class="option"><input type="radio" name="startup_history" value="成功创业过"> 成功创业过（目前仍有项目在运行）</label>
+          </div>
+        </div>
+      </section>
+
+      <!-- 四、 投资诉求与目标 -->
+      <section aria-labelledby="sec4">
+        <div class="section-title" id="sec4">四、 投资诉求与目标</div>
+
+        <div class="row">
+          <label>意向赛道：</label>
+          <div class="inputs" role="group" aria-label="赛道选项">
+            <label class="option"><input type="radio" name="track_intent" value="现制饮品（奶茶/咖啡）" required> 现制饮品（奶茶/咖啡）</label>
+            <label class="option"><input type="radio" name="track_intent" value="快餐简餐"> 快餐简餐</label>
+            <label class="option"><input type="radio" name="track_intent" value="火锅/串串"> 火锅/串串</label>
+            <label class="option"><input type="radio" name="track_intent" value="其他" id="track_other"> 其他：<input type="text" name="track_other_text" placeholder="请注明" aria-label="其他赛道" style="width:180px;"/></label>
+          </div>
+        </div>
+
+        <div class="row" aria-label="目标选址区域">
+          <label>目标选址区域：</label>
+          <div class="inputs grid-3" role="group" aria-label="省 市 区 街道">
+            <input type="text" name="target_province" placeholder="省" aria-label="省" />
+            <input type="text" name="target_city" placeholder="市" aria-label="市" />
+            <input type="text" name="target_district" placeholder="区" aria-label="区" />
+          </div>
+          <div class="grid-3" style="width:100%; margin-top:6px;">
+            <input type="text" name="target_street" placeholder="街道/商圈" aria-label="街道/商圈" />
+          </div>
+        </div>
+
+        <div class="row" aria-label="核心投资目标">
+          <label>核心投资目标：</label>
+          <div class="inputs" role="group" aria-label="投资目标多选">
+            <label class="option"><input type="checkbox" name="investment_goals" value="追求回本速度"> 追求回本速度（希望 12 个月内回本，接受高强度竞争）</label>
+            <label class="option"><input type="checkbox" name="investment_goals" value="长期稳健"> 追求长期稳健（接受 18-24 个月回本，但要求品牌抗风险能力强）</label>
+            <label class="option"><input type="checkbox" name="investment_goals" value="品牌溢价"> 追求品牌溢价（倾向于加盟头部大品牌，哪怕利润率稍低）</label>
+          </div>
+        </div>
+      </section>
+
+      <div class="submit-row">
+        <button class="submit" type="submit">提交调查</button>
+      </div>
+    </form>
+
+    <!-- JSON 预览已禁用 -->
+  </div>
+
+  <script>
+    // 新增：提交后将表单数据导出为完整的 full_survey.json 和背景 person_background.json，并计算风险评估
+    (function(){
+      var form = document.getElementById('surveyForm');
+      form.addEventListener('submit', function(e){
+        e.preventDefault();
+
+        // 构建并聚合数据为完整结构
+        var background = {
+          age_group: document.querySelector('input[name="age_group"]:checked')?.value || "",
+          education: document.querySelector('input[name="education"]:checked')?.value || "",
+          employment_status: document.querySelector('input[name="employment_status"]:checked')?.value || "",
+          startup_form: document.querySelector('input[name="startup_form"]:checked')?.value || "",
+          weekly_hours: (document.querySelector('input[name="weekly_hours"]')?.value) ? Number(document.querySelector('input[name="weekly_hours"]').value) : null
+        };
+
+        var sections = {
+          background: background,
+          financial: {
+            total_budget: (document.querySelector('input[name="total_budget"]')?.value) ? Number(document.querySelector('input[name="total_budget"]').value) : null,
+            fund_source: document.querySelector('input[name="fund_source"]:checked')?.value || "",
+            max_loss: (document.querySelector('input[name="max_loss"]')?.value) ? Number(document.querySelector('input[name="max_loss"]').value) : null,
+            household_income: document.querySelector('input[name="household_income"]:checked')?.value || ""
+          },
+          experience: {
+            catering_background: document.querySelector('input[name="catering_background"]:checked')?.value || "",
+            mgmt_skills: Array.from(document.querySelectorAll('input[name="mgmt_skills"]:checked')).map(el => el.value),
+            startup_history: document.querySelector('input[name="startup_history"]:checked')?.value || ""
+          },
+          investment: {
+            track_intent: document.querySelector('input[name="track_intent"]:checked')?.value || "",
+            target_location: {
+              province: document.querySelector('input[name="target_province"]')?.value || "",
+              city: document.querySelector('input[name="target_city"]')?.value || "",
+              district: document.querySelector('input[name="target_district"]')?.value || "",
+              street: document.querySelector('input[name="target_street"]')?.value || ""
+            },
+            investment_goals: Array.from(document.querySelectorAll('input[name="investment_goals"]:checked')).map(el => el.value),
+            track_other_text: document.querySelector('input[name="track_other_text"]')?.value?.trim() || ""
+          }
+        };
+
+        // 风险评估函数（简易规则，可扩展）
+        function clamp(n, min, max){ return Math.max(min, Math.min(max, n)); }
+        function computeRiskFromSections(sections){
+          var risk = 0;
+          var b = sections.background;
+          // 背景维度
+          switch (b.age_group){ case '20-25': risk += 4; break; case '26-35': risk += 3; break; case '36-50': risk += 2; break; case '50+': risk += 1; break; }
+          if (b.education === '高中及以下') risk += 4; else if (b.education === '专科/本科') risk += 2; else if (b.education === '硕士及以上') risk += 0;
+          // 职业状态
+          switch (sections.background.employment_status){ case '在职（寻找副业）': risk += 3; break; case '自由职业': risk += 3; break; case '待业/应届生': risk += 5; break; }
+          // 创业形态
+          if (b.startup_form === '全职投入') risk += 4; else if (b.startup_form === '兼职/托管模式') risk += 2;
+          // 时长
+          var wh = b.weekly_hours || 0; if (wh >= 30) risk += 6; else if (wh >= 20) risk += 3;
+          // 财务
+          if (sections.financial.total_budget == null){ risk += 6; } else { if (sections.financial.total_budget < 20) risk += 3; else if (sections.financial.total_budget < 50) risk += 0; else risk -= 4; }
+          if (sections.financial.fund_source === '银行贷款/负债') risk += 5;
+          if (sections.financial.max_loss == null || sections.financial.max_loss <= 0) risk += 3; else if (sections.financial.max_loss < 10) risk += 1; else if (sections.financial.max_loss < 50) risk += 0; else risk -= 3;
+          switch (sections.financial.household_income){ case '15万以下': risk += 3; break; case '15-50万': break; case '50-100万': risk -= 1; break; case '100万+': risk -= 3; break; }
+          // 行业经验
+          if (sections.experience.catering_background === '无经验') risk += 4; else if (sections.experience.catering_background === '基层经验') risk += 2; else risk += 0;
+          if (sections.experience.mgmt_skills && sections.experience.mgmt_skills.length > 0) risk -= Math.min(6, sections.experience.mgmt_skills.length * 2);
+          switch (sections.experience.startup_history){ case '首次创业': risk += 2; break; case '失败过 1 次': risk += 4; break; case '成功创业过': risk += 0; }
+          // 投资目标数量
+          var ig = Array.isArray(sections.investment.investment_goals) ? sections.investment.investment_goals.length : 0;
+          risk += Math.max(0, ig - 1) * 2;
+          risk = clamp(Math.round(risk), 0, 100);
+          var level = '低风险';
+          if (risk <= 25) level = '低风险';
+          else if (risk <= 45) level = '偏低/中低风险';
+          else if (risk <= 65) level = '中等';
+          else if (risk <= 85) level = '较高';
+          else level = '高风险';
+
+          var reasons = [];
+          var recommendations = [];
+          if (sections.investment.track_intent === '其他'){
+            // 备注：若用户选择了其他赛道但未填充具体文本，提示填写
+            if (!sections.investment.track_other_text) reasons.push('未提供其他赛道的明确信息');
+          }
+          if (sections.background.catering_background === '无经验') reasons.push('餐饮背景缺乏经验');
+          if ((sections.financial.total_budget == null) || sections.financial.total_budget < 20) reasons.push('启动资金不足');
+          if (sections.financial.max_loss != null && sections.financial.max_loss < 10) reasons.push('风险承受能力较低的亏损容忍度');
+          if (!sections.experience.mgmt_skills || sections.experience.mgmt_skills.length === 0) reasons.push('缺乏关键管理技能');
+          if (sections.experience.startup_history === '失败过 1 次') reasons.push('曾有失败创业经验，需要加强前期评估');
+
+          if (risk > 60) {
+            recommendations.push('重点关注资金结构、市场进入壁垒、供应链稳定性；考虑咨询导师与合规顾问。');
+          }
+          if (sections.background.weekly_hours && sections.background.weekly_hours >= 30) {
+            recommendations.push('高投入需确保团队/资源配置，避免过度工作导致运营风险');
+          }
+          if (!sections.experience.mgmt_skills || sections.experience.mgmt_skills.length === 0) {
+            recommendations.push('提升管理技能：财务/人力/运营/供应链等核心能力，以降低风险');
+          }
+          return { score: risk, level: level, reasons: reasons, recommendations: recommendations };
+        }
+
+        // 方案B：新增四维度打分（各维度 0-25，总分 0-100）
+        function scoreFourDims(sections){
+          // 财务维度
+          var f = 0;
+          var budget = sections.financial.total_budget;
+          if (budget != null){
+            if (budget >= 50) f += 15; else if (budget >= 20) f += 10; else if (budget >= 10) f += 6; else f += 0;
+          }
+          if (sections.financial.fund_source === '银行贷款/负债') f += 6;
+          var maxLoss = sections.financial.max_loss;
+          if (maxLoss == null) f += 6; else if (maxLoss >= 50) f += 6; else if (maxLoss >= 20) f += 3; else if (maxLoss >= 10) f += 1;
+          var hh = sections.financial.household_income;
+          if (hh === '100万+') f += 5; else if (hh === '50-100万') f += 3; else if (hh === '15-50万') f += 2; else f += 0;
+          if (f > 25) f = 25;
+
+          // 经验维度
+          var e = 0;
+          var bg = sections.experience.catering_background;
+          if (bg === '管理经验') e += 20; else if (bg === '基层经验') e += 10; else e += 0;
+          var skills = sections.experience.mgmt_skills?.length || 0;
+          if (skills >= 3) e += 12; else if (skills >= 1) e += 6; else e += 0;
+          var hist = sections.experience.startup_history;
+          if (hist === '成功创业过') e += 12; else if (hist === '首次创业') e += 6; else if (hist === '失败过1次') e += 2; else e += 0;
+          if (e > 25) e = 25;
+
+          // 时间/心态维度
+          var t = 0;
+          var wh = sections.background.weekly_hours || 0;
+          if (wh >= 30) t += 12; else if (wh >= 20) t += 6; else t += 0;
+          if (sections.background.startup_form === '全职投入') t += 8; else t += 4;
+          if (t > 25) t = 25;
+
+          // 区域维度
+          var r = 0;
+          if (sections.investment?.target_location?.city && sections.investment?.target_location?.city.length > 0) r += 20;
+          if (sections.investment?.target_location?.district && sections.investment?.target_location?.district.length > 0) r += 5;
+          if (r > 25) r = 25;
+
+          var total = f + e + t + r;
+          if (total > 100) total = 100;
+          return { financial: f, experience: e, timeMindset: t, region: r, total: total };
+        }
+
+        // 渲染前端风险可视化表格
+        function renderRiskViz(dims){
+          var viz = document.getElementById('riskViz');
+          if (!viz) return;
+          if (!dims) { viz.style.display = 'none'; return; }
+          viz.style.display = 'block';
+          var f = dims.financial || 0;
+          var e = dims.experience || 0;
+          var t = dims.timeMindset || 0;
+          var r = dims.region || 0;
+          var total = dims.total || 0;
+          viz.innerHTML = `
+            <div class="risk-item"><div class="risk-label">资金匹配度</div><div class="risk-bar"><div class="risk-fill" style="width:${Math.max(0, Math.min(100, Math.round((f/25)*100)))}%"></div></div><div class="risk-score">${f}/25</div></div>
+            <div class="risk-item"><div class="risk-label">经验维度</div><div class="risk-bar"><div class="risk-fill" style="width:${Math.max(0, Math.min(100, Math.round((e/25)*100)))}%"></div></div><div class="risk-score">${e}/25</div></div>
+            <div class="risk-item"><div class="risk-label">时间/心态维度</div><div class="risk-bar"><div class="risk-fill" style="width:${Math.max(0, Math.min(100, Math.round((t/25)*100)))}%"></div></div><div class="risk-score">${t}/25</div></div>
+            <div class="risk-item"><div class="risk-label">区域维度</div><div class="risk-bar"><div class="risk-fill" style="width:${Math.max(0, Math.min(100, Math.round((r/25)*100)))}%"></div></div><div class="risk-score">${r}/25</div></div>
+            <div class="risk-total" style="grid-column: 1 / -1; text-align:right; font-weight:700;">总分: ${total}/100</div>
+          `;
+        }
+
+        // 计算四维度分并组合风险评估（方案A）
+        var riskOld = computeRiskFromSections(sections);
+        var riskDims = scoreFourDims(sections);
+        var scoreTotal = riskDims.total;
+        var levelName = scoreTotal >= 90 ? '高度适配' : scoreTotal >= 70 ? '中度适配' : scoreTotal >= 50 ? '轻度适配' : '低适配';
+        var rangeStr = scoreTotal >= 90 ? '（90-100 分）' : scoreTotal >= 70 ? '（70-89 分）' : scoreTotal >= 50 ? '（50-69 分）' : '（0-49 分）';
+        var coreConclusion = '';
+        if (scoreTotal >= 90) coreConclusion = '创业风险极低，建议直接进入扩张阶段或开展更大规模试点。';
+        else if (scoreTotal >= 75) coreConclusion = '创业风险较低，建议直接进入小规模试点或快速迭代优化。';
+        else if (scoreTotal >= 60) coreConclusion = '创业风险中等，需谨慎推进，建议先叠代或轻资产测试。';
+        else if (scoreTotal >= 50) coreConclusion = '创业风险较高，建议先积累经验等，并调整回本预期。';
+        else coreConclusion = '创业风险极高，请重新评估关键前提。';
+
+        // 风险评估（综合、含四维度分解）
+        var riskAssessment = {
+          score: scoreTotal,
+          level: levelName,
+          dimensions: {
+            financial: { score: riskDims.financial },
+            experience: { score: riskDims.experience },
+            timeMindset: { score: riskDims.timeMindset },
+            region: { score: riskDims.region },
+            total: riskDims.total
+          },
+          reasons: riskOld.reasons,
+          recommendations: riskOld.recommendations
+        };
+
+        // 组装完整输出结构
+        var fullSurvey = {
+          survey_version: "1.0",
+          submitted_at: new Date().toISOString(),
+          sections: sections,
+          risk_assessment: riskAssessment
+        };
+
+        // 生成完整 JSON 文件
+        var fullJson = JSON.stringify(fullSurvey, null, 2);
+        var fullBlob = new Blob([fullJson], { type: "application/json" });
+        var fullUrl = URL.createObjectURL(fullBlob);
+        var aFull = document.createElement('a');
+        var ts = new Date().toISOString().replace(/[:.]/g, '-');
+        aFull.href = fullUrl;
+        aFull.download = `survey_${ts}.json`;
+        document.body.appendChild(aFull);
+        aFull.click();
+        document.body.removeChild(aFull);
+        URL.revokeObjectURL(fullUrl);
+
+        // 不再输出 JSON 内容，改为输出风险评估报告
+        // 渲染前端可视化风险表
+        renderRiskViz(riskDims);
+        var riskReportEl = document.getElementById('riskReport');
+        if (riskReportEl) {
+          var dimsText = `四维度分解：资金维度 ${riskDims.financial}/25，经验维度 ${riskDims.experience}/25，时间/心态维度 ${riskDims.timeMindset}/25，区域维度 ${riskDims.region}/25，总分 ${scoreTotal}/100`;
+          riskReportEl.textContent = `餐饮创业适配性综合评价报告\n综合评分：${scoreTotal} 分\n适配等级：${levelName}${rangeStr}\n核心结论：${coreConclusion}\n${dimsText}`;
+          riskReportEl.style.display = 'block';
+        }
+      });
+    })();
+  </script>
+  <div id="riskViz" class="riskViz" style="display:none;"></div>
+  <div id="riskReport" style="display:none; white-space:pre-wrap; padding:12px; margin:12px 0; background:#fffBE6; border:1px solid #F2C94C; border-radius:6px;"></div>
+  
+</body>
+</html>

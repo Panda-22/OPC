@@ -1,0 +1,83 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Full Survey Schema",
+  "type": "object",
+  "properties": {
+    "survey_version": { "type": "string" },
+    "submitted_at": { "type": "string", "format": "date-time" },
+    "sections": {
+      "type": "object",
+      "properties": {
+        "background": {
+          "type": "object",
+          "properties": {
+            "age_group": { "type": "string" },
+            "education": { "type": "string" },
+            "employment_status": { "type": "string" },
+            "startup_form": { "type": "string" },
+            "weekly_hours": { "type": ["number", "null"] }
+          },
+          "required": ["age_group", "education", "employment_status", "startup_form"]
+        },
+        "financial": {
+          "type": "object",
+          "properties": {
+            "total_budget": { "type": ["number", "null"] },
+            "fund_source": { "type": "string" },
+            "max_loss": { "type": ["number", "null"] },
+            "household_income": { "type": "string" }
+          },
+          "required": ["total_budget", "fund_source", "max_loss", "household_income"]
+        },
+        "experience": {
+          "type": "object",
+          "properties": {
+            "catering_background": { "type": "string" },
+            "mgmt_skills": { "type": "array", "items": { "type": "string" } },
+            "startup_history": { "type": "string" }
+          }
+        },
+        "investment": {
+          "type": "object",
+          "properties": {
+            "track_intent": { "type": "string" },
+            "target_location": {
+              "type": "object",
+              "properties": {
+                "province": { "type": "string" },
+                "city": { "type": "string" },
+                "district": { "type": "string" },
+                "street": { "type": "string" }
+              }
+            },
+            "investment_goals": { "type": "array", "items": { "type": "string" } },
+            "track_other_text": { "type": "string" }
+          }
+        }
+      },
+      "required": ["background", "financial", "experience", "investment"]
+    },
+    "risk_assessment": {
+      "type": "object",
+      "properties": {
+        "score": { "type": "number" },
+        "level": { "type": "string" },
+        "dimensions": {
+          "type": "object",
+          "properties": {
+            "financial": { "type": "number" },
+            "experience": { "type": "number" },
+            "timeMindset": { "type": "number" },
+            "region": { "type": "number" },
+            "total": { "type": "number" }
+          },
+          "required": ["financial", "experience", "timeMindset", "region", "total"]
+        },
+        "reasons": { "type": "array", "items": { "type": "string" } },
+        "recommendations": { "type": "array", "items": { "type": "string" } }
+      },
+      "required": ["score", "level", "dimensions", "reasons", "recommendations"]
+    }
+  },
+  "required": ["survey_version", "submitted_at", "sections", "risk_assessment"]
+}
