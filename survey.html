@@ -58,11 +58,28 @@
     .risk-fill { height: 100%; background: linear-gradient(90deg, #34d399, #10b981); }
     .risk-score { text-align: right; font-weight: 600; }
     .risk-total { margin-top: 6px; font-weight: 700; text-align: right; }
+    .report-actions { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin-top: 14px; }
+    .report-actions a {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 44px;
+      padding: 10px 12px;
+      border-radius: 6px;
+      background: #2563eb;
+      color: #fff;
+      text-decoration: none;
+      font-weight: 700;
+      text-align: center;
+    }
+    .report-actions a:nth-child(2) { background: #f97316; }
+    .report-actions a:nth-child(3) { background: #16a34a; }
 
     @media (max-width: 700px) {
       .row { align-items: flex-start; }
       .row label { min-width: 180px; }
       .grid-2, .grid-3 { grid-template-columns: 1fr; }
+      .report-actions { grid-template-columns: 1fr; }
     }
   </style>
 </head>
@@ -206,6 +223,14 @@
           </div>
         </div>
 
+        <div class="row" aria-label="意向加盟品牌">
+          <label>意向加盟品牌（可选）：</label>
+          <div class="inputs" role="group">
+            <input type="text" name="brand_intent" placeholder="例如：茶百道、蜜雪冰城、古茗" aria-label="意向加盟品牌" />
+            <span class="hint">填写后将生成品牌双向适配度报告；不填写则按通用品牌模型分析。</span>
+          </div>
+        </div>
+
         <div class="row" aria-label="目标选址区域">
           <label>目标选址区域：</label>
           <div class="inputs grid-3" role="group" aria-label="省 市 区 街道">
@@ -237,6 +262,8 @@
   </div>
 
   <script>
+    var API_BASE = window.location.protocol === 'file:' ? 'http://localhost:8000' : '';
+
     // 提交后将表单数据导出为完整的 full_survey.json 和背景 person_background.json，并计算风险评估
     (function(){
       var form = document.getElementById('surveyForm');
@@ -274,7 +301,8 @@
               street: document.querySelector('input[name="target_street"]')?.value || ""
             },
             investment_goals: Array.from(document.querySelectorAll('input[name="investment_goals"]:checked')).map(el => el.value),
-            track_other_text: document.querySelector('input[name="track_other_text"]')?.value?.trim() || ""
+            track_other_text: document.querySelector('input[name="track_other_text"]')?.value?.trim() || "",
+            brand_intent: document.querySelector('input[name="brand_intent"]')?.value?.trim() || ""
           }
         };
 
@@ -439,7 +467,7 @@
         var fullJson = JSON.stringify(fullSurvey, null, 2);
         
         // 同时上传到后端获取分析报告
-        fetch('http://localhost:8000/upload', {
+        fetch(API_BASE + '/upload', {
           method: 'POST',
           body: (() => {
             var f = new FormData();
@@ -454,7 +482,7 @@
           var resp = JSON.parse(text);
           if (resp.session_id && resp.analysis) {
             // 正确传递session_id
-            showAnalysisResult({session_id: resp.session_id, analysis: resp.analysis});
+            showAnalysisResult({session_id: resp.session_id, analysis: resp.analysis, reports: resp.reports});
           } else {
             alert('上传结果: ' + text);
           }
@@ -472,6 +500,7 @@
       console.log('showAnalysisResult called with:', resp);
       var analysis = resp.analysis || resp;
       var sessionId = resp.session_id;
+      var reports = resp.reports || {};
       console.log('sessionId:', sessionId);
       
       var container = document.getElementById('riskReport');
@@ -502,16 +531,23 @@ container.style.maxHeight = '300px';
         text += `  ${i+1}. ${s}\n`;
       });
       container.textContent = text;
-      
-      // 添加报告查看链接
-      var reportLink = document.createElement('a');
-      reportLink.textContent = '查看详细报告 →';
-      reportLink.style.cssText = 'display:inline-block;margin:16px 8px 0 0;padding:12px 24px;background:#e74c3c;color:#fff;text-decoration:none;border-radius:6px;font-weight:bold;';
-      reportLink.href = '/report.html?data=' + encodeURIComponent(JSON.stringify(analysis));
-      container.appendChild(reportLink);
-      
-      // 添加对话界面
-      addChatInterface(sessionId);
+
+      if (reports.compatibility || reports.location || reports.brand) {
+        var actions = document.createElement('div');
+        actions.className = 'report-actions';
+        var reportBase = API_BASE || window.location.origin;
+        function reportHref(path) {
+          if (!path) return '#';
+          if (/^https?:\/\//.test(path)) return path;
+          return reportBase + path;
+        }
+        actions.innerHTML = `
+          <a href="${reportHref(reports.compatibility)}">综合适配度报告</a>
+          <a href="${reportHref(reports.location)}">选址分析报告</a>
+          <a href="${reportHref(reports.brand)}">品牌双向适配报告</a>
+        `;
+        container.appendChild(actions);
+      }
     }
     
     function renderRadarChart(dimensions) {
@@ -620,50 +656,6 @@ container.style.maxHeight = '300px';
       }
     }
     
-    function addChatInterface(sessionId) {
-      if (document.getElementById('chatContainer')) return;
-      
-      var chatDiv = document.createElement('div');
-      chatDiv.id = 'chatContainer';
-      chatDiv.style.cssText = 'margin-top:16px;padding:12px;background:#fff;border:1px solid #e5e7eb;border-radius:8px;';
-      chatDiv.innerHTML = `
-        <h3 style="margin:0 0 12px;">智能问答</h3>
-        <div id="chatMessages" style="max-height:200px;overflow-y:auto;background:#f9fafb;padding:8px;border-radius:4px;margin-bottom:8px;font-size:14px;"></div>
-        <div style="display:flex;gap:8px;">
-          <input id="chatInput" type="text" placeholder="请输入问题..." style="flex:1;padding:8px;border:1px solid #e5e7eb;border-radius:4px;">
-          <button id="chatSend" style="padding:8px 16px;background:#2563eb;color:#fff;border:none;border-radius:4px;cursor:pointer;">发送</button>
-        </div>
-      `;
-      document.body.appendChild(chatDiv);
-      
-      document.getElementById('chatSend').onclick = function() { sendChat(); };
-      document.getElementById('chatInput').onkeydown = function(e) { if(e.key==='Enter') sendChat(); };
-      
-      function sendChat() {
-        var input = document.getElementById('chatInput');
-        var msgs = document.getElementById('chatMessages');
-        var msg = input.value.trim();
-        if (!msg || !sessionId) return;
-        
-        msgs.innerHTML += `<div style="margin:4px 0;"><b>你：</b>${msg}</div>`;
-        input.value = '';
-        
-        fetch('http://localhost:8000/chat_with_deepseek', {
-          method: 'POST',
-          headers: {'Content-Type': 'application/json'},
-          body: JSON.stringify({session_id: sessionId, message: msg})
-        }).then(r => {
-          if (!r.ok) throw new Error('HTTP ' + r.status);
-          return r.text();
-        }).then(text => {
-          var resp = JSON.parse(text);
-          msgs.innerHTML += `<div style="margin:4px 0;color:#2563eb;"><b>助手：</b>${resp.reply||'暂无回复'}</div>`;
-          msgs.scrollTop = msgs.scrollHeight;
-        }).catch(e => {
-          msgs.innerHTML += `<div style="color:red;">请求失败: ${e}</div>`;
-        });
-      }
-    }
   </script>
   <div id="riskViz" class="riskViz" style="display:none;"></div>
   <div id="riskReport" style="display:block; white-space:pre-wrap; padding:12px; margin:12px 0; background:#fffBE6; border:1px solid #F2C94C; border-radius:6px;"></div>

@@ -1,64 +1,62 @@
-# 投资分析智能体 (OPC)
+# OPC 餐饮投资报告应用
 
-餐饮投资智能分析系统 - 结合调查问卷与AI智能体
+基于问卷数据生成三份餐饮创业分析报告：
 
-## 环境要求
+- 综合适配度报告
+- 选址分析报告
+- 加盟品牌双向适配报告
 
-- Python 3.8+
-- DeepSeek API Key
+所有报告均标注：仅基于公开数据分析，不构成最终投资建议。
 
-## 快速启动
-
-### 1. 安装依赖
-
-```bash
-cd backend
-pip install -r requirements.txt
-```
-
-### 2. 配置文件 (重要!)
-
-在项目根目录 `OPC/` 下创建 `.env` 文件:
+## 启动
 
 ```bash
-DEEPSEEK_API_URL=https://api.deepseek.com/v1/chat/completions
-DEEPSEEK_API_KEY=你的API密钥
+pip install -r backend/requirements.txt
+uvicorn backend.main:app --host 127.0.0.1 --port 8000 --reload
 ```
 
-### 3. 启动服务
+访问：
 
-```bash
-uvicorn backend.main:app --host 0.0.0.0 --port 8000
+```text
+http://127.0.0.1:8000/
 ```
 
-### 4. 访问
+## 接口
 
-- 调查问卷: http://localhost:8000/
+### 提交问卷
 
-## 输出文件
+```text
+POST /upload
+Content-Type: multipart/form-data
+field: file
+```
 
-每次提交问卷后会自动生成：
-- `data/survey_YYYY-MM-DD.json` - 原始问卷数据
-- `data/report_YYYY-MM-DD.pdf` - 分析报告PDF
+上传内容为问卷 JSON。接口返回本次会话的三份报告链接：
+
+```json
+{
+  "session_id": "uuid",
+  "reports": {
+    "compatibility": "/reports/{session_id}/compatibility",
+    "location": "/reports/{session_id}/location",
+    "brand": "/reports/{session_id}/brand"
+  }
+}
+```
+
+### 查看报告
+
+```text
+GET /reports/{session_id}/compatibility
+GET /reports/{session_id}/location
+GET /reports/{session_id}/brand
+```
 
 ## 项目结构
 
+```text
+survey.html
+backend/
+  main.py
+  requirements.txt
 ```
-├── .env                    # API配置（需要手动创建）
-├── survey.html            # 调查问卷页面
-├── README.md
-├── backend/
-│   ├── main.py            # FastAPI服务器
-│   └── requirements.txt
-├── agents/
-│   └── investment_report_agent.py
-└── data/                  # 生成的文件目录
-```
-
-## 依赖
-
-- fastapi
-- uvicorn
-- httpx
-- python-multipart
-- fpdf
